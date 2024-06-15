@@ -48,4 +48,20 @@ router.post('/', async (req, res) => {
   }
 });
 
+router.delete('/:transactionId', async (req, res) => {
+  try {
+    const { transactionId } = req.params;
+    console.log(`Deleting messages for transactionId: ${transactionId}`);
+    // Use deleteMany to remove all documents matching the condition
+    const deleteResult = await Message.deleteMany({ transactionId });
+    if (deleteResult.deletedCount === 0) {
+      return res.status(404).json({ msg: 'Messages not found' });
+    }
+    res.json({ msg: 'Messages deleted' });
+  } catch (error) {
+    console.error('Error deleting messages:', error.message);
+    res.status(500).send('Server Error');
+  }
+});
+
 module.exports = router;

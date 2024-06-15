@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import React, { useEffect, useState } from 'react';
 import axios from 'axios'; // Import axios for API calls
 import Header from '@/components/navbar-header';
@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 export default function ChatroomPage({ params }) {
   const [messages, setMessages] = useState([]);
@@ -20,6 +21,7 @@ export default function ChatroomPage({ params }) {
   const [selectedLanguage, setSelectedLanguage] = useState('en');  // Default to English
   const [overallSentiment, setOverallSentiment] = useState('');  // State for sentiment
   const transactionId = params.transactionId;
+  const [summary, setSummary] = useState('');
 
   const apiKey = 'efc50c7e9amsh2fba9aea7f15f21p15c0dcjsn05ab783b6cba';
   const apiHost = 'deep-translate1.p.rapidapi.com';
@@ -39,7 +41,9 @@ export default function ChatroomPage({ params }) {
 
       // Translate messages if a language other than English is selected
       if (selectedLanguage !== 'en') {
-        const translated = await Promise.all(data.map((msg) => translateMessage(msg, 'en', selectedLanguage)));
+        const translated = await Promise.all(
+          data.map((msg) => translateMessage(msg, 'en', selectedLanguage))
+        );
         setTranslatedMessages(translated);
       } else {
         setTranslatedMessages(data);
@@ -93,7 +97,9 @@ export default function ChatroomPage({ params }) {
 
       // Translate messages if a language other than English is selected
       if (selectedLanguage !== 'en') {
-        const translated = await Promise.all(data.map((msg) => translateMessage(msg, 'en', selectedLanguage)));
+        const translated = await Promise.all(
+          data.map((msg) => translateMessage(msg, 'en', selectedLanguage))
+        );
         setTranslatedMessages(translated);
       } else {
         setTranslatedMessages(data);
@@ -106,6 +112,29 @@ export default function ChatroomPage({ params }) {
 
     } catch (error) {
       console.error('Error sending message:', error);
+    }
+  };
+  const handleSolveClick = async (transactionId) => {
+    // Construct the URL with the transactionId
+    const url = `http://localhost:4000/chat/${transactionId}`;
+
+    try {
+      // Make a DELETE request to the specified URL
+      const response = await fetch(url, {
+        method: 'DELETE',
+      });
+
+      // Check if the request was successful
+      if (response.ok) {
+        console.log('Delete operation was successful');
+        // Handle success (e.g., update UI or state)
+      } else {
+        console.error('Delete operation failed', response.statusText);
+        // Handle failure (e.g., show error message)
+      }
+    } catch (error) {
+      console.error('Error making delete request', error);
+      // Handle network errors or other exceptions
     }
   };
 
@@ -163,7 +192,36 @@ export default function ChatroomPage({ params }) {
       return 'error'; // Default to 'error' if sentiment analysis fails
     }
   };
-  
+
+  const handleSummarize = async () => {
+    const textToSummarize = messages.join(' '); // Combine all messages into a single string
+    const apiUrl = 'https://article-extractor-and-summarizer.p.rapidapi.com/summarize-text';
+    const payload = JSON.stringify({ lang: 'en', text: textToSummarize });
+    
+    const headers = {
+      'x-rapidapi-key': 'efc50c7e9amsh2fba9aea7f15f21p15c0dcjsn05ab783b6cba', // Use your RapidAPI key here
+      'x-rapidapi-host': 'article-extractor-and-summarizer.p.rapidapi.com',
+      'Content-Type': 'application/json',
+    };
+
+    try {
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: headers,
+        body: payload,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to summarize text');
+      }
+
+      const result = await response.json();
+      setSummary(result.summary); // Assuming the summary is in the result.summary
+    } catch (error) {
+      console.error('Error summarizing messages:', error);
+    }
+  };
+
 
   useEffect(() => {
     fetchMessages(); // Fetch messages initially
@@ -180,9 +238,16 @@ export default function ChatroomPage({ params }) {
       <Header />
       <h1 className="text-3xl font-bold">Transaction ID: {transactionId}</h1>
       <div className="mt-4 max-w-lg w-full bg-white shadow-md rounded-lg overflow-hidden">
-        <div className="px-4 py-2 border-b">
-          <h2 className="text-lg font-semibold">Chat Messages</h2>
-        </div>
+        <div className="px-4 py-2 border-b flex justify-between items-center">
+        <h2 className="text-lg font-semibold">Chat Messages</h2>
+        <button
+          type="button"
+          className="border border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-colors duration-150 ease-in-out rounded px-4 py-2"
+          onClick={() => handleSolveClick(transactionId)}
+        >
+          Solve
+        </button>
+      </div>
         <div className="p-4">
           {loading ? (
             <p>Loading messages...</p>
@@ -194,25 +259,41 @@ export default function ChatroomPage({ params }) {
             ))
           )}
         </div>
-      </div>
-      <div className="mt-4 w-full max-w-lg">
-        <Select onValueChange={(value) => setSelectedLanguage(value)}>
-          <SelectTrigger>
-            <SelectValue placeholder="Translate" />
+        <div className="mt-4 w-full max-w-lg">
+        <Select
+          value={selectedLanguage}
+          onValueChange={setSelectedLanguage}
+        >
+          <SelectTrigger aria-label="Language Selector">
+            <SelectValue />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              <SelectLabel>Choose a language</SelectLabel>
-              <SelectItem value='en'>English</SelectItem>
-              <SelectItem value='it'>Italian</SelectItem>
-              <SelectItem value='id'>Indonesian</SelectItem>
+              <SelectLabel>Select Language</SelectLabel>
+              <SelectItem value="en">English</SelectItem>
+              <SelectItem value="id">Indonesian</SelectItem>
+              <SelectItem value="it">Italian</SelectItem>
+              {/* Add more languages as needed */}
             </SelectGroup>
           </SelectContent>
         </Select>
       </div>
-      <div className="mt-4 w-full max-w-lg">
-        <p>Overall Sentiment: <strong>{overallSentiment}</strong></p> {/* Display sentiment */}
       </div>
+      <div className="mt-4 w-full max-w-lg flex items-center justify-between">
+        <p>Overall Sentiment: <strong>{overallSentiment}</strong></p>
+        <button
+          className="flex-shrink-0 bg-transparent border-2 border-teal-500 text-teal-500 hover:bg-teal-500 hover:text-white text-sm py-1 px-4 rounded"
+          onClick={handleSummarize}
+        >
+          Summarize
+        </button>
+      </div>
+      {summary && (
+        <div className="mt-4 max-w-lg w-full bg-white shadow-md rounded-lg overflow-hidden p-4">
+          <h2 className="text-lg font-semibold">Summary</h2>
+          <p>{summary}</p>
+        </div>
+      )}
       <form className="mt-4 w-full max-w-lg" onSubmit={handleSubmit}>
         <div className="flex items-center border-b border-teal-500 py-2">
           <input
@@ -230,6 +311,7 @@ export default function ChatroomPage({ params }) {
           </button>
         </div>
       </form>
+
     </main>
   );
 }

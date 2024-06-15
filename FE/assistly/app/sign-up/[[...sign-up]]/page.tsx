@@ -1,5 +1,8 @@
 import { SignUp } from "@clerk/nextjs";
-
+import Header from "../../../components/navbar-header";
 export default function Page() {
-  return <SignUp />; 
-}
+  return (<main className="flex flex-col items-center justify-center min-h-screen py-20">
+    <Header />
+    <SignUp/>
+  </main>);
+};

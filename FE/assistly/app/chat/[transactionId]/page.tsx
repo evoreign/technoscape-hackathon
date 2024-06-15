@@ -57,7 +57,7 @@ export default function ChatroomPage({ params }) {
   useEffect(() => {
     fetchMessages(); // Fetch messages initially
 
-    const intervalId = setInterval(fetchMessages, 5000); // Poll every 5 seconds
+    const intervalId = setInterval(fetchMessages, 99999000); // Poll every 5 seconds
 
     return () => {
       clearInterval(intervalId); // Clean up interval on component unmount
