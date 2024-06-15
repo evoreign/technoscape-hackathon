@@ -31,7 +31,7 @@ export default function ChatroomPage({ params }) {
     if (newMessage.trim() === '') return;
 
     try {
-      const response = await fetch('https://a081-182-253-54-191.ngrok-free.app/chat', {
+      const response = await fetch('http://localhost:4000/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
