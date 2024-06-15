@@ -38,7 +38,7 @@ export default function ChatroomPage({ params }) {
         },
         body: JSON.stringify({
           transactionId,
-          message: `Customer: ${newMessage}`,
+          message: `Agent: ${newMessage}`,
         }),
       });
 
